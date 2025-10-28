@@ -90,7 +90,7 @@ npm install
 Create a `.env` file in the backend directory:
 ```env
 NODE_ENV=development
-PORT=3000
+PORT=4000
 MONGODB_URI=mongodb://localhost:27017/user-registration
 JWT_SECRET=your-super-secret-jwt-key
 BCRYPT_SALT_ROUNDS=10
@@ -117,7 +117,7 @@ brew services start mongodb/brew/mongodb-community
 npm run start:dev
 ```
 
-The backend API will be available at: `http://localhost:3000/api`
+The backend API will be available at: `http://localhost:4000/api`
 
 ### 3. Frontend Setup
 
@@ -225,7 +225,7 @@ npm run lint
 #### Environment Variables for Production
 ```env
 NODE_ENV=production
-PORT=3000
+PORT=4000
 MONGODB_URI=your-production-mongodb-uri
 JWT_SECRET=your-production-secret
 BCRYPT_SALT_ROUNDS=12

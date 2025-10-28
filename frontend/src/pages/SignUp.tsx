@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/ui/toast'
 import { userService, CreateUserRequest, ApiError } from '@/services/api'
 import { Eye, EyeOff, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
@@ -16,6 +17,7 @@ interface FormData {
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const { addToast } = useToast()
 
   const {
     register,
@@ -29,9 +31,23 @@ const SignUp = () => {
 
   const mutation = useMutation({
     mutationFn: (data: CreateUserRequest) => userService.register(data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       reset()
+      addToast({
+        type: 'success',
+        title: 'Registration Successful!',
+        message: `Account created for ${response.user.email}. You can now login.`,
+        duration: 5000
+      })
     },
+    onError: (error: ApiError) => {
+      addToast({
+        type: 'error',
+        title: 'Registration Failed',
+        message: error.message || 'An error occurred during registration',
+        duration: 5000
+      })
+    }
   })
 
   const onSubmit = (data: FormData) => {
@@ -51,9 +67,9 @@ const SignUp = () => {
             <p className="text-muted-foreground mb-6">
               Your account has been created successfully. You can now sign in with your credentials.
             </p>
-            <Button asChild className="w-full">
-              <Link to="/login">Go to Login</Link>
-            </Button>
+            <Link to="/login">
+              <Button className="w-full">Go to Login</Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -170,7 +186,7 @@ const SignUp = () => {
             <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
               <p className="text-destructive text-sm flex items-center">
                 <AlertCircle className="h-4 w-4 mr-2" />
-                {(mutation.error as ApiError)?.message || 'An error occurred during registration'}
+                {(mutation.error as unknown as ApiError)?.message || 'An error occurred during registration'}
               </p>
             </div>
           )}

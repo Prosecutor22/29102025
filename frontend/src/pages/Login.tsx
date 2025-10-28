@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useMutation } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/ui/toast'
+import { userService, LoginUserRequest, ApiError } from '@/services/api'
 import { Eye, EyeOff, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 
 interface FormData {
@@ -12,40 +15,44 @@ interface FormData {
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [loginSuccess, setLoginSuccess] = useState(false)
+  const { addToast } = useToast()
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
+    reset,
   } = useForm<FormData>()
 
-  const onSubmit = async (data: FormData) => {
-    setIsLoading(true)
-    
-    // Simulate API call
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Mock validation - in real app, call your login API
-      if (data.email === 'demo@example.com' && data.password === 'password123') {
-        setLoginSuccess(true)
-      } else {
-        setError('root', {
-          type: 'manual',
-          message: 'Invalid email or password. Try demo@example.com / password123',
-        })
-      }
-    } catch (error) {
-      setError('root', {
-        type: 'manual',
-        message: 'An error occurred during login',
+  const mutation = useMutation({
+    mutationFn: (data: LoginUserRequest) => userService.login(data),
+    onSuccess: (response) => {
+      setLoginSuccess(true)
+      addToast({
+        type: 'success',
+        title: 'Login Successful!',
+        message: `Welcome back, ${response.user.email}!`,
+        duration: 5000
       })
-    } finally {
-      setIsLoading(false)
+      reset()
+    },
+    onError: (error: ApiError) => {
+      addToast({
+        type: 'error',
+        title: 'Login Failed',
+        message: error.message || 'An error occurred during login',
+        duration: 5000
+      })
     }
+  })
+
+  const onSubmit = (data: FormData) => {
+    const loginData: LoginUserRequest = {
+      email: data.email,
+      password: data.password
+    }
+    mutation.mutate(loginData)
   }
 
   if (loginSuccess) {
@@ -60,9 +67,9 @@ const Login = () => {
             <p className="text-muted-foreground mb-6">
               Welcome back! You have been successfully logged in.
             </p>
-            <Button asChild className="w-full">
-              <Link to="/">Go to Dashboard</Link>
-            </Button>
+            <Link to="/">
+              <Button className="w-full">Go to Dashboard</Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -79,12 +86,11 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Demo Credentials Notice */}
+        {/* Info Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
           <p className="text-blue-700 text-sm">
-            <strong>Demo Credentials:</strong><br />
-            Email: demo@example.com<br />
-            Password: password123
+            <strong>Login with your registered account</strong><br />
+            Don't have an account? Sign up first to create one.
           </p>
         </div>
 
@@ -175,11 +181,11 @@ const Login = () => {
           </div>
 
           {/* Error Message */}
-          {errors.root && (
+          {mutation.isError && (
             <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
               <p className="text-destructive text-sm flex items-center">
                 <AlertCircle className="h-4 w-4 mr-2" />
-                {errors.root.message}
+                {(mutation.error as ApiError)?.message || 'An error occurred during login'}
               </p>
             </div>
           )}
@@ -188,9 +194,9 @@ const Login = () => {
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading}
+            disabled={mutation.isPending}
           >
-            {isLoading ? (
+            {mutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Signing In...
