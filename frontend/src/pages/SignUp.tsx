@@ -170,7 +170,9 @@ const SignUp = () => {
             <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
               <p className="text-destructive text-sm flex items-center">
                 <AlertCircle className="h-4 w-4 mr-2" />
-                {(mutation.error as ApiError)?.message || 'An error occurred during registration'}
+                {mutation.error && typeof mutation.error === 'object' && 'message' in mutation.error 
+                  ? (mutation.error as unknown as ApiError).message 
+                  : 'An error occurred during registration'}
               </p>
             </div>
           )}
